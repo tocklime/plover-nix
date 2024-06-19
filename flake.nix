@@ -3,47 +3,38 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
   inputs.utils.url = "github:numtide/flake-utils";
+  inputs.plover = {
+    url = "github:openstenoproject/plover/v4.0.0rc2";
+    flake = false;
+  };
+  inputs.plover_stroke = {
+    url = "github:openstenoproject/plover_stroke/1.1.0";
+    flake = false;
+  };
+  inputs.rtf_tokenize = {
+    url = "github:openstenoproject/rtf_tokenize/1.0.0";
+    flake = false;
+  };
 
-  outputs = { nixpkgs, utils, ... }: 
+  outputs = { nixpkgs, utils, ... }@inputs: 
     utils.lib.eachDefaultSystem (system: 
       let 
         pkgs = import nixpkgs { inherit system; };
-        rtf_tokenize = with pkgs.python3Packages; buildPythonPackage rec {
+        rtf_tokenize = with pkgs.python3Packages; buildPythonPackage {
           name = "plover_stroke";
-          version = "1.1.0";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "openstenoproject";
-            repo = name;
-            rev = version;
-            sha256 = "sha256-A75OMzmEn0VmDAvmQCp6/7uptxzwWJTwsih3kWlYioA=";
-          };
+          src = inputs.plover_stroke;
         };
-        plover_stroke = with pkgs.python3Packages; buildPythonPackage rec {
+        plover_stroke = with pkgs.python3Packages; buildPythonPackage {
           name = "rtf_tokenize";
-          version = "1.0.0";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "openstenoproject";
-            repo = name;
-            rev = version;
-            sha256 = "sha256-zwD2sRYTY1Kmm/Ag2hps9VRdUyQoi4zKtDPR+F52t9A=";
-          };
+          src = inputs.rtf_tokenize;
         };
-        plover = with pkgs.python3Packages; pkgs.qt5.mkDerivationWith buildPythonPackage rec {
+        plover = with pkgs.python3Packages; pkgs.qt5.mkDerivationWith buildPythonPackage {
           name = "plover";
           version = "4.0.0rc2";
 
-          src = pkgs.fetchFromGitHub {
-            owner = "openstenoproject";
-            repo = "plover";
-            rev = "v${version}";
-            sha256 = "sha256-rmMec/BbvOJ92u8Tmp3Kv2YezzJxB/L8UrDntTDSKj4=";
-          };
+          src = inputs.plover;
 
-          nativeCheckInputs = [ pytest mock pytest-qt ];
           doCheck = false;
-          postPatch = "sed -i /PyQt5/d setup.cfg";
 
           propagatedBuildInputs = with pkgs; [
             babel pyqt5 xlib pyserial
